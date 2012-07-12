@@ -6,8 +6,6 @@ import (
 	"log"
 )
 
-const timeLayout = "20060102T150405Z"
-
 func main() {
 	var url string
 	flag.StringVar(&url, "url", "", "Private URL of Google Calendar ICS to process")

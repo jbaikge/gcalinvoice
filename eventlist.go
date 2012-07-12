@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const timeLayout = "20060102T150405Z"
+
 type EventList []Event
 
 func (l *EventList) Append(e Event) {
