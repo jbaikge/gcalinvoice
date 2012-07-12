@@ -22,21 +22,25 @@ func (l EventList) Len() int           { return len(l) }
 func (l EventList) Less(i, j int) bool { return l[i].Summary < l[j].Summary }
 func (l EventList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
-func GetEvents(url string) (events EventList, err error) {
+func GetEvents(url string, dateRange DateRange) (events EventList, err error) {
 	var (
+		doneChan  = make(chan bool)
 		eventChan = make(chan Event)
+		datedChan = make(chan Event)
 		lineChan  = make(chan string)
 	)
 
-	// Absorb events
-	go func(eventChan <-chan Event) {
-		for event := range eventChan {
-			events.Append(event)
-		}
-	}(eventChan)
-
 	// Build events
 	go EventBuilder(lineChan, eventChan)
+	// Event Filters
+	go EventDateFilter(eventChan, datedChan, dateRange)
+	// Absorb events
+	go func(in <-chan Event) {
+		for event := range in {
+			events.Append(event)
+		}
+		doneChan <- true
+	}(datedChan)
 
 	response, err := http.Get(url)
 	defer response.Body.Close()
@@ -58,10 +62,21 @@ func GetEvents(url string) (events EventList, err error) {
 			buffer.Reset()
 		}
 	}
+	close(lineChan)
+	<-doneChan
 
 	sort.Sort(events)
 
 	return
+}
+
+func EventDateFilter(in <-chan Event, out chan<- Event, dateRange DateRange) {
+	for event := range in {
+		if event.Start.After(dateRange.Start) && event.End.Before(dateRange.End) {
+			out <- event
+		}
+	}
+	close(out)
 }
 
 func EventBuilder(in <-chan string, out chan<- Event) {
@@ -83,6 +98,7 @@ func EventBuilder(in <-chan string, out chan<- Event) {
 			tmp.Summary = s
 		}
 	}
+	close(out)
 }
 
 func ParseDate(s string) (t time.Time) {
