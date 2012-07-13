@@ -15,7 +15,7 @@ type DateRange struct {
 func prettyPrint(events EventList) {
 	var (
 		linef      = "%-73s%6.2f\n"
-		width      = 73 + 6
+		hr         = strings.Repeat("-", 73+6)
 		monthTotal = make(map[string]float64)
 		poTotal    = make(map[string]float64)
 		total      = 0.00
@@ -29,15 +29,15 @@ func prettyPrint(events EventList) {
 		fmt.Printf(linef, e.Start.Format("Jan _2, 2006 - ")+e.Summary, d)
 	}
 
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(hr)
 	for m, d := range monthTotal {
 		fmt.Printf(linef, m, d)
 	}
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(hr)
 	for p, d := range poTotal {
 		fmt.Printf(linef, string(p), d)
 	}
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(hr)
 	fmt.Printf(linef, "Overall Total", total)
 	fmt.Printf(linef, "Entry Count", float64(len(events)))
 }
