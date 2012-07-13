@@ -4,11 +4,42 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
 type DateRange struct {
 	Start, End time.Time
+}
+
+func prettyPrint(events EventList) {
+	var (
+		linef      = "%-73s%6.2f\n"
+		width      = 73 + 6
+		monthTotal = make(map[string]float64)
+		poTotal    = make(map[string]float64)
+		total      = 0.00
+	)
+
+	for _, e := range events {
+		d := e.Duration()
+		total += d
+		monthTotal[e.Start.Format("January 2006")] += d
+		poTotal[e.PO()] += d
+		fmt.Printf(linef, e.Start.Format("Jan _2, 2006 - ")+e.Summary, d)
+	}
+
+	fmt.Println(strings.Repeat("-", width))
+	for m, d := range monthTotal {
+		fmt.Printf(linef, m, d)
+	}
+	fmt.Println(strings.Repeat("-", width))
+	for p, d := range poTotal {
+		fmt.Printf(linef, string(p), d)
+	}
+	fmt.Println(strings.Repeat("-", width))
+	fmt.Printf(linef, "Overall Total", total)
+	fmt.Printf(linef, "Entry Count", float64(len(events)))
 }
 
 func main() {
@@ -28,8 +59,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Event Count: %d\n", len(events))
-	for _, event := range events {
-		fmt.Printf("%-72s %5.2f\n", event.Summary, event.Duration())
-	}
+	prettyPrint(events)
 }
